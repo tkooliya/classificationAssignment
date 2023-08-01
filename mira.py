@@ -63,38 +63,51 @@ class MiraClassifier:
         bestAccuracyCount = -1  # best accuracy so far on validation set
         cGrid.sort(reverse=True)
         bestParams = cGrid[0]
+        classRange = self.legalLabels
 
+        score = util.Counter()
+        bestCWeights = util.Counter()
+        cVals = util.Counter()
         "*** YOUR CODE HERE ***"
         for c in cGrid:
+            self.initializeWeightsToZero()
             for iteration in range(self.max_iterations):
                 print("Starting iteration ", iteration, "...")
                 for i in range(len(trainingData)):
-                    "*** YOUR CODE HERE ***"
-                    classRange = self.legalLabels
 
-                    score = util.Counter()
+                    "*** YOUR CODE HERE ***"
                     feature = trainingData[i]
 
                     #compute score for each label:
-
-                    #print(self.legalLabels)
-                    for label in classRange:
-                        score[label] = self.weights[label] * feature
-
-                    bestScore = score.argMax()
+                    for label in self.legalLabels:
+                        score[label] = self.weights[label] * trainingData[i]
 
 
-                    if trainingLabels[i] != bestScore:
+                    if trainingLabels[i] != score.argMax():
+                        tauI = ((self.weights[score.argMax()] - self.weights[trainingLabels[i]]) * feature + 1)/(2*(feature * feature))
+                        tauF = min(tauI, c)
 
-                        tauI = ((self.weights[bestScore] - self.weights[trainingLabels[i]]) * feature + 1) / (2 * (feature * feature))
-                        print(tauI)
-                        tauF = 0
-                        tauF = min(c, tauI)
                         result = util.Counter()
                         for key, value in feature.items():
                             result[key] = value * tauF
-                        self.weights[trainingLabels[i]] = self.weights[trainingLabels[i]] + result
-                        self.weights[bestScore] = self.weights[bestScore] - result
+
+                        self.weights[trainingLabels[i]] += result
+                        self.weights[score.argMax()] -= result
+
+            bestCWeights[c] = self.weights.copy()
+
+            count = 0
+            for valid in range(len(validationData)):
+                for label in validationLabels:
+                    score[label] = validationData[valid] * self.weights[label]
+                if validationLabels[valid] == score.argMax():
+                    count = count + 1
+
+            cVals[c] = count
+            print(cVals)
+
+        self.weights = bestCWeights[cVals.argMax()]
+
 
         print("finished training. Best cGrid param = ", bestParams)
 

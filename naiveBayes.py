@@ -73,8 +73,21 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
         for i in range(len(trainingData)):
             datum = trainingData[i]
             label = trainingLabels[i]
+
+
+
             "*** YOUR CODE HERE to complete populating commonPrior, commonCounts, and commonConditionalProb ***"
-            util.raiseNotDefined()
+
+            for key, value in datum.items():
+                commonCounts[(key, label)] += 1
+                if value == 1:
+                    commonConditionalProb[key, label] += 1
+
+        for label in trainingLabels:
+            commonPrior[label] += 1
+        commonPrior.normalize()
+
+
 
         for k in kgrid: # Smoothing parameter tuning loop!
             prior = util.Counter()
@@ -141,7 +154,19 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
 
         for label in self.legalLabels:
             "*** YOUR CODE HERE, to populate logJoint() list ***"
-            util.raiseNotDefined()
+            logJoint[label] = math.log(self.prior[label])
+            for key, value in datum.items():
+                if not(value):
+
+                    condProbBar = 1 - self.conditionalProb[(key,label)]
+
+                    if condProbBar > 0:
+                        logJoint[label] += math.log(condProbBar)
+                    else:
+                        logJoint[label] += 1
+
+                else:
+                    logJoint[label] += math.log(self.conditionalProb[(key, label)])
 
 
         return logJoint
@@ -153,9 +178,22 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
 
         Note: you may find 'self.features' a useful way to loop through all possible features
         """
+
+
+        "might be wrong? I think it's taking the first 100 most highest features"
         featuresOdds = []
 
-        "*** YOUR CODE HERE, to populate featureOdds based on above formula. ***"
-        util.raiseNotDefined()
+        for feature in self.features:
+            label1Feature = self.conditionalProb[feature, label1]
+            label2Feature = self.conditionalProb[feature, label2]
+            featuresOdds.append(((label1Feature/label2Feature), feature))
+        featuresOdds.sort(reverse=True)
+
+        featuresOddsTemp = []
+        for index, (key, value) in enumerate(featuresOdds):
+            if index < 100:  # Only consider the first 100 elements
+                featuresOddsTemp.append(value)
+
+        featuresOdds = featuresOddsTemp
 
         return featuresOdds
