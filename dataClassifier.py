@@ -17,6 +17,7 @@ import mira
 import samples
 import sys
 import util
+from scipy.ndimage import label
 
 TEST_SET_SIZE = 100
 DIGIT_DATUM_WIDTH=28
@@ -67,7 +68,36 @@ def enhancedFeatureExtractorDigit(datum):
 
     ##
     """
-    features =  basicFeatureExtractorDigit(datum)
+    features = basicFeatureExtractorDigit(datum)
+    pixelArr = [[] for _ in range(DIGIT_DATUM_HEIGHT)]
+    for i in range(DIGIT_DATUM_WIDTH):
+        for j in range(DIGIT_DATUM_HEIGHT):
+            if datum.getPixel(i, j) > 0:
+                pixelArr[i].append(0)
+            else:
+                pixelArr[i].append(1)
+
+
+    labelndarray, numbers_features = label(pixelArr, structure=[[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+    # add features corresponding to the number of connected white spaces in digit
+
+    if numbers_features == 1:
+        features[(0, -1)] = 1
+        features[(0, -2)] = 0
+        features[(0, -3)] = 0
+    elif numbers_features == 2:
+        features[(0, -1)] = 0
+        features[(0, -2)] = 1
+        features[(0, -3)] = 0
+    else:
+        features[(0, -1)] = 0
+        features[(0, -2)] = 0
+        features[(0, -3)] = 1
+
+    return features
+
+
+
 
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
