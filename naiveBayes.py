@@ -74,8 +74,6 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
             datum = trainingData[i]
             label = trainingLabels[i]
 
-
-
             "*** YOUR CODE HERE to complete populating commonPrior, commonCounts, and commonConditionalProb ***"
 
             for key, value in datum.items():
@@ -154,9 +152,12 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
 
         for label in self.legalLabels:
             "*** YOUR CODE HERE, to populate logJoint() list ***"
+            # get log-join initialization from log of prior prob
             logJoint[label] = math.log(self.prior[label])
+
+            # Calcuates the log-joint prrobability for a given label
             for key, value in datum.items():
-                if not(value):
+                if not(value): # feature DNE
 
                     condProbBar = 1 - self.conditionalProb[(key,label)]
 
@@ -165,7 +166,7 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
                     else:
                         logJoint[label] += 1
 
-                else:
+                else: # feature exists
                     logJoint[label] += math.log(self.conditionalProb[(key, label)])
 
 

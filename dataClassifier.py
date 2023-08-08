@@ -57,6 +57,7 @@ def basicFeatureExtractorFace(datum):
                 features[(x,y)] = 0
     return features
 
+
 def enhancedFeatureExtractorDigit(datum):
     """
     Your feature extraction playground.
@@ -65,42 +66,102 @@ def enhancedFeatureExtractorDigit(datum):
     for this datum (datum is of type samples.Datum).
 
     ## DESCRIBE YOUR ENHANCED FEATURES HERE...
+    1. How many breaks in contiguous pixels of digit exists
+    2. How many white/black regions exist
 
     ##
     """
+    numBreaks = 0
+    white_region_count = 0
+    black_region_count = 0
+    whites = set()
+    blacks = set()
     features = basicFeatureExtractorDigit(datum)
-    pixelArr = [[] for _ in range(DIGIT_DATUM_HEIGHT)]
+
+    tuplePixels = [iter(iterable) for iterable in datum.getPixels()]
+
+    # calculating for row pixel breaks
+    for i in datum.getPixels():
+        for j in range(1, len(i)):
+            # check to see previous row
+            if (i[j] != i[j - 1]):
+                numBreaks += 1
+
+    # calculating for column pixel breaks
+    for i in tuple(next(iterator) for iterator in tuplePixels):
+        for j in range(1, i):
+            if (i[j] != i[j - 1]):
+                numBreaks += 1
+    print(numBreaks)
+
+    #Assign the binary features for 5 iterators if breaks > 150
+    for i in range(5):
+        if (numBreaks > 150):
+            features[i] = 1
+        else:
+            features[i] = 0
+
+    # need to perform DFS to traverse white and black regions of the pixel to count the number of contiguous regions of white and black (pixel or no pixel)
+    def dfs_whiteRegion(x, y):
+        if (x,y) in whites or x < 0 or x >= DIGIT_DATUM_WIDTH or y < 0 or y >= DIGIT_DATUM_HEIGHT or datum.getPixel(x, y) != 0:
+            return
+        whites.add((x, y))
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            dfs_whiteRegion(x + dx, y + dy)
+    def dfs_blackRegion(x, y):
+        if (x, y) in blacks or x < 0 or x >= DIGIT_DATUM_WIDTH or y < 0 or y >= DIGIT_DATUM_HEIGHT or datum.getPixel(x, y) != 1:
+            return
+        blacks.add((x, y))
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            dfs_blackRegion(x + dx, y + dy)
+
+    # pixelArr = [[] for _ in range(DIGIT_DATUM_HEIGHT)]
+    # determines contiguous white and black regions within the number
+
     for i in range(DIGIT_DATUM_WIDTH):
         for j in range(DIGIT_DATUM_HEIGHT):
-            if datum.getPixel(i, j) > 0:
-                pixelArr[i].append(0)
-            else:
-                pixelArr[i].append(1)
+            if datum.getPixel(i, j) == 0 and (i, j) not in whites:
+                dfs_whiteRegion(i, j)
+                # pixelArr[i].append(0)
+                white_region_count += 1
+            if datum.getPixel(i, j) == 1 and (i, j) not in blacks:
+                dfs_blackRegion(i, j)
+                black_region_count += 1
+                # pixelArr[i].append(1)
 
-
-    labelndarray, numbers_features = label(pixelArr, structure=[[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+    # labelndarray, numbers_features = label(pixelArr, structure=[[1, 1, 1], [1, 1, 1], [1, 1, 1]])
     # add features corresponding to the number of connected white spaces in digit
 
-    if numbers_features == 1:
-        features[(0, -1)] = 1
-        features[(0, -2)] = 0
-        features[(0, -3)] = 0
-    elif numbers_features == 2:
-        features[(0, -1)] = 0
-        features[(0, -2)] = 1
-        features[(0, -3)] = 0
+    if white_region_count == 1:
+        features[(0, 1)] = 1
+        features[(0, 2)] = 0
+        features[(0, 3)] = 0
+    elif white_region_count == 2:
+        features[(0, 1)] = 0
+        features[(0, 2)] = 1
+        features[(0, 3)] = 0
     else:
-        features[(0, -1)] = 0
-        features[(0, -2)] = 0
-        features[(0, -3)] = 1
+        features[(0, 1)] = 0
+        features[(0, 2)] = 0
+        features[(0, 3)] = 1
 
-    return features
+    if black_region_count == 1:
+        features[(1, 0)] = 1
+        features[(2, 0)] = 0
+        features[(3, 0)] = 0
+    elif black_region_count == 2:
+        features[(1, 0)] = 0
+        features[(2, 0)] = 1
+        features[(3, 0)] = 0
+    else:
+        features[(1, 0)] = 0
+        features[(2, 0)] = 0
+        features[(3, 0)] = 1
 
-
-
-
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if white_region_count > black_region_count:
+        features[(0, 4)] = 1  # More white regions
+    else:
+        features[(0, 4)] = 0  # More black regions
 
     return features
 

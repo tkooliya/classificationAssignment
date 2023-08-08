@@ -69,8 +69,11 @@ class MiraClassifier:
         bestCWeights = util.Counter()
         cVals = util.Counter()
         "*** YOUR CODE HERE ***"
+        #loop through c values
         for c in cGrid:
             self.initializeWeightsToZero()
+
+            #get training data
             for iteration in range(self.max_iterations):
                 print("Starting iteration ", iteration, "...")
                 for i in range(len(trainingData)):
@@ -82,7 +85,7 @@ class MiraClassifier:
                     for label in self.legalLabels:
                         score[label] = self.weights[label] * trainingData[i]
 
-
+                    #if prediction is wrong, update weights using MIRA
                     if trainingLabels[i] != score.argMax():
                         tauI = ((self.weights[score.argMax()] - self.weights[trainingLabels[i]]) * feature + 1)/(2*(feature * feature))
                         tauF = min(tauI, c)
@@ -94,6 +97,7 @@ class MiraClassifier:
                         self.weights[trainingLabels[i]] += result
                         self.weights[score.argMax()] -= result
 
+            # evaluate accuracy on validation data given calculated weights
             bestCWeights[c] = self.weights.copy()
 
             count = 0
@@ -106,6 +110,7 @@ class MiraClassifier:
             cVals[c] = count
             print(cVals)
 
+        #assign the weights accordingly given best weights
         self.weights = bestCWeights[cVals.argMax()]
 
 
